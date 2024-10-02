@@ -59,4 +59,54 @@ window.onclick = function (event) {
   if (event.target == modal) {
     closeModal();
   }
-};
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  const dropdownBtn = document.querySelector(".dropdown-btn");
+  const nav = document.querySelector("nav ul");
+
+  dropdownBtn.addEventListener("click", () => {
+    nav.classList.toggle("show");
+  });
+
+  const sections = document.querySelectorAll("section");
+  const navLinks = document.querySelectorAll("nav ul li a");
+
+  window.addEventListener("scroll", () => {
+    let current = "";
+    sections.forEach((section) => {
+      const sectionTop = section.offsetTop;
+      const sectionHeight = section.clientHeight;
+      if (pageYOffset >= sectionTop - sectionHeight / 3) {
+        current = section.getAttribute("id");
+      }
+    });
+
+    navLinks.forEach((link) => {
+      link.classList.remove("active");
+      if (link.getAttribute("href").slice(1) === current) {
+        link.classList.add("active");
+      }
+    });
+  });
+
+  const observer = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add("visible");
+        }
+      });
+    },
+    { threshold: 0.1 }
+  );
+
+  document.querySelectorAll(".section-content").forEach((section) => {
+    observer.observe(section);
+  });
+});
+
+function showModal(title, content) {
+  alert(`${title}\n\n${content}`);
+  // In a real application, you would create a more sophisticated modal here
+}

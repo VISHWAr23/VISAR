@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="stylesheet" href="./staff.css"></link>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Staff Dashboard - VISAR Examination Project</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <header>
+      <h1>Staff Dashboard</h1>
+    </header>
+
+    <main class="container">
+      <section id="exam-start-section" class="fade-in">
+        <h2>Set Exam Start Date</h2>
+        <form id="exam-start-form">
+          <input type="date" id="exam-start-date" required />
+          <button type="submit">Set Start Date</button>
+        </form>
+      </section>
+
+      <section id="staff-input" class="fade-in">
+        <h2>Subject Input Form</h2>
+        <form id="staff-form">
+          <input
+            type="text"
+            id="staff-name"
+            placeholder="Staff Name"
+            required
+          />
+          <input
+            type="text"
+            id="subject-name"
+            placeholder="Subject Name"
+            required
+          />
+          <input
+            type="email"
+            id="staff-email"
+            placeholder="Staff Email"
+            required
+          />
+          <input
+            type="number"
+            id="subject-completion"
+            placeholder="Subject Completion (%)"
+            min="0"
+            max="100"
+            step="0.1"
+            required
+          />
+          <button type="submit">Submit</button>
+        </form>
+      </section>
+
+      <section id="timetable-management" class="fade-in">
+        <h2>Timetable Management</h2>
+        <button id="create-timetable">Create New Timetable</button>
+        <select id="timetable-selector"></select>
+      </section>
+
+      <section id="subject-list" class="fade-in"></section>
+
+      <section id="timetable" class="fade-in"></section>
+      <section id="database-storage" class="fade-in">
+        <h2>Database Storage</h2>
+        <button id="store-db-btn">Store in Database</button>
+        <div id="table-name-input" style="display: none">
+          <input type="text" id="table-name" placeholder="Enter table name" />
+          <button id="confirm-store-btn">Confirm</button>
+        </div>
+      </section>
+    </main>
+
+    <div id="modal" class="modal">
+      <div class="modal-content">
+        <span class="close">&times;</span>
+        <p id="modal-message"></p>
+      </div>
+    </div>
+  </body>
+  <script src="./staff.js"></script>
+</html>
