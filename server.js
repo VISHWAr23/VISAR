@@ -80,6 +80,36 @@ app.post('/api/store-timetables', (req, res) => {
   });
 });
 
+
+app.get('/api/timetable-names', (req, res) => {
+  const query = `
+    SHOW TABLES;
+  `;
+
+  db.query(query, (err, results) => {
+    if (err) {
+      console.error('Error fetching timetable names:', err);
+      return res.status(500).json({ error: 'Error fetching timetable names', details: err.message });
+    }
+    const tableNames = results.map(row => row.table_name);
+    res.json(tableNames);
+  });
+});
+
+// New endpoint to fetch full timetable for a specific table
+app.get('/api/timetable/:tableName', (req, res) => {
+  const tableName = req.params.tableName;
+  const query = `SELECT * FROM \`${tableName}\``;
+
+  db.query(query, (err, results) => {
+    if (err) {
+      console.error('Error fetching timetable:', err);
+      return res.status(500).json({ error: 'Error fetching timetable', details: err.message });
+    }
+    res.json(results);
+  });
+});
+
 app.listen(port, () => {
   console.log(`Server running at http://localhost:${port}`);
 });
