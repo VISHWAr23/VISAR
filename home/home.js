@@ -17,14 +17,14 @@ dropdownBtn.addEventListener("click", () => {
   navUl.classList.toggle("show");
 });
 
-document.getElementById("contactForm").addEventListener("submit", (e) => {
-  e.preventDefault();
-  const name = document.getElementById("name").value;
-  const email = document.getElementById("email").value;
-  const message = document.getElementById("message").value;
-  alert(`Thank you, ${name}! Your message has been sent.`);
-  e.target.reset();
-});
+// document.getElementById("contactForm").addEventListener("submit", (e) => {
+//   e.preventDefault();
+//   const name = document.getElementById("name").value;
+//   const email = document.getElementById("email").value;
+//   const message = document.getElementById("message").value;
+//   alert(`Thank you, ${name}! Your message has been sent.`);
+//   e.target.reset();
+// });
 
 
 window.addEventListener("scroll", () => {
@@ -62,15 +62,26 @@ window.onclick = function (event) {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
+  const navLinks = document.querySelectorAll("nav a");
   const dropdownBtn = document.querySelector(".dropdown-btn");
-  const nav = document.querySelector("nav ul");
+  const navUl = document.querySelector("nav ul");
+  const modal = document.getElementById("modal");
+  const sections = document.querySelectorAll("section");
 
-  dropdownBtn.addEventListener("click", () => {
-    nav.classList.toggle("show");
+  // Navigation and scroll functionality
+  navLinks.forEach((link) => {
+    link.addEventListener("click", (e) => {
+      navLinks.forEach((l) => l.classList.remove("active"));
+      link.classList.add("active");
+      if (window.innerWidth <= 600) {
+        navUl.classList.remove("show");
+      }
+    });
   });
 
-  const sections = document.querySelectorAll("section");
-  const navLinks = document.querySelectorAll("nav ul li a");
+  dropdownBtn.addEventListener("click", () => {
+    navUl.classList.toggle("show");
+  });
 
   window.addEventListener("scroll", () => {
     let current = "";
@@ -90,6 +101,20 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 
+  // Contact form submission
+  const contactForm = document.getElementById("contactForm");
+  if (contactForm) {
+    contactForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const name = document.getElementById("name").value;
+      const email = document.getElementById("email").value;
+      const message = document.getElementById("message").value;
+      alert(`Thank you, ${name}! Your message has been sent.`);
+      e.target.reset();
+    });
+  }
+
+  // Intersection Observer for section visibility
   const observer = new IntersectionObserver(
     (entries) => {
       entries.forEach((entry) => {
@@ -105,73 +130,104 @@ document.addEventListener("DOMContentLoaded", () => {
     observer.observe(section);
   });
 
-});
-fetchTimetableNames();
+  // Modal functionality
+  function showModal(title, content) {
+    const modalTitle = document.getElementById("modalTitle");
+    const modalContent = document.getElementById("modalContent");
 
-function showModal(title, content) {
-  alert(`${title}\n\n${content}`);
-  // In a real application, you would create a more sophisticated modal here
-}
+    modalTitle.textContent = title;
+    modalContent.innerHTML = content;
+    modal.style.display = "block";
+  }
 
-function fetchTimetableNames() {
-  fetch("http://localhost:3000/api/timetable-names")
-    .then(response => response.json())
-    .then(data => {
-      const cardContainer = document.querySelector("#timetable .card-container");
-      cardContainer.innerHTML = ""; // Clear existing cards
+  function closeModal() {
+    modal.style.display = "none";
+  }
 
-      data.forEach(tableName => {
-        const card = createTimetableCard(tableName);
-        cardContainer.appendChild(card);
+  window.onclick = function (event) {
+    if (event.target == modal) {
+      closeModal();
+    }
+  };
+
+  // Close button functionality
+  const closeButton = document.querySelector(".close");
+  if (closeButton) {
+    closeButton.addEventListener("click", closeModal);
+  }
+
+  // Fetch and display table cards
+  function fetchAndDisplayTableCards() {
+    fetch('http://localhost:3000/api/tables')
+      .then(response => {
+        if (!response.ok) {
+          // If response is not OK, log the status and throw an error to catch
+          throw new Error(`Server Error: ${response.status}`);
+        }
+        return response.json();
+      })
+      .then(tables => {
+        const cardContainer = document.querySelector("#timetable .card-container");
+        if (cardContainer) {
+          cardContainer.innerHTML = ''; // Clear existing cards
+          
+          tables.forEach(tableName => {
+            const card = document.createElement('div');
+            card.className = 'card';
+            card.onclick = () => showTableContent(tableName);
+            
+            card.innerHTML = `
+              <h3>${tableName}</h3>
+              <p>Click to view details</p>
+            `;
+            
+            cardContainer.appendChild(card);
+          });
+        }
+      })
+      .catch(error => {
+        console.error('Error fetching tables:', error.message || error);
+        showModal('Error', `Failed to fetch examination timetables. Error: ${error.message || 'Please try again later.'}`);
       });
-    })
-    .catch(error => {
-      console.error("Error fetching timetable names:", error);
-      showModal("Error", "Failed to fetch timetable data. Please try again later.");
-    });
 }
 
-function createTimetableCard(tableName) {
-  const card = document.createElement("div");
-  card.className = "card";
-  card.onclick = () => fetchAndDisplayFullTimetable(tableName);
 
-  const title = document.createElement("h3");
-  title.textContent = tableName;
+  // Show table content
+  function showTableContent(tableName) {
+    fetch(`http://localhost:3000/api/table/${tableName}`)
+      .then(response => response.json())
+      .then(data => {
+        let content = `<h2>${tableName}</h2>`;
+        if (data.length > 0) {
+          content += '<table border="1"><tr>';
+          // Create table headers
+          Object.keys(data[0]).forEach(key => {
+            content += `<th>${key}</th>`;
+          });
+          content += '</tr>';
+          // Create table rows
+          data.forEach(row => {
+            content += '<tr>';
+            Object.values(row).forEach(value => {
+              content += `<td>${value}</td>`;
+            });
+            content += '</tr>';
+          });
+          content += '</table>';
+        } else {
+          content += '<p>No data available for this table.</p>';
+        }
+        showModal(tableName, content);
+      })
+      .catch(error => {
+        console.error('Error fetching table content:', error);
+        showModal('Error', 'Failed to fetch table content. Please try again later.');
+      });
+  }
 
-  card.appendChild(title);
-  return card;
-}
-
-function fetchAndDisplayFullTimetable(tableName) {
-  fetch(`http://localhost:3000/api/timetable/${encodeURIComponent(tableName)}`)
-    .then(response => response.json())
-    .then(data => {
-      displayFullTimetable(tableName, data);
-    })
-    .catch(error => {
-      console.error("Error fetching full timetable:", error);
-      showModal("Error", "Failed to fetch timetable data. Please try again later.");
-    });
-}
-
-function displayFullTimetable(tableName, timetableData) {
-  let content = `<h2>${tableName}</h2><table><tr><th>Date</th><th>Subject</th><th>Staff</th><th>Email</th><th>Completion</th></tr>`;
-  
-  timetableData.forEach(entry => {
-    content += `<tr>
-      <td>${new Date(entry.exam_start_date).toDateString()}</td>
-      <td>${entry.subject_name}</td>
-      <td>${entry.staff_name}</td>
-      <td>${entry.staff_email}</td>
-      <td>${entry.subject_completion}%</td>
-    </tr>`;
-  });
-  
-  content += '</table>';
-  
-  showModal(tableName, content);
-}
+  // Call this function to load the table cards
+  fetchAndDisplayTableCards();
+});
 
 // Update the showModal function to handle HTML content
 function showModal(title, content) {
@@ -183,3 +239,10 @@ function showModal(title, content) {
   modalContent.innerHTML = content;
   modal.style.display = "block";
 }
+
+
+function showModal(title, content) {
+  alert(`${title}\n\n${content}`);
+  // In a real application, you would create a more sophisticated modal here
+}
+

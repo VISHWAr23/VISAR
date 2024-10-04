@@ -81,30 +81,33 @@ app.post('/api/store-timetables', (req, res) => {
 });
 
 
-app.get('/api/timetable-names', (req, res) => {
+app.get('/api/tables', (req, res) => {
   const query = `
-    SHOW TABLES;
+    SELECT TABLE_NAME 
+    FROM INFORMATION_SCHEMA.TABLES
+    WHERE TABLE_SCHEMA = ?
   `;
-
-  db.query(query, (err, results) => {
+  
+  db.query(query, [db.config.connectionConfig.database], (err, results) => {
     if (err) {
-      console.error('Error fetching timetable names:', err);
-      return res.status(500).json({ error: 'Error fetching timetable names', details: err.message });
+      console.error('Error fetching tables:', err);
+      return res.status(500).json({ error: 'Error fetching tables', details: err.message });
     }
-    const tableNames = results.map(row => row.table_name);
-    res.json(tableNames);
+    const tables = results.map(row => row.TABLE_NAME);
+    console.log(tables);
+    res.json(tables);
   });
 });
 
-// New endpoint to fetch full timetable for a specific table
-app.get('/api/timetable/:tableName', (req, res) => {
+// New endpoint to get table content
+app.get('/api/table/:tableName', (req, res) => {
   const tableName = req.params.tableName;
-  const query = `SELECT * FROM \`${tableName}\``;
-
+  const query = `SELECT * FROM ${tableName}`;
+  
   db.query(query, (err, results) => {
     if (err) {
-      console.error('Error fetching timetable:', err);
-      return res.status(500).json({ error: 'Error fetching timetable', details: err.message });
+      console.error(`Error fetching data from ${tableName}:`, err);
+      return res.status(500).json({ error: `Error fetching data from ${tableName}`, details: err.message });
     }
     res.json(results);
   });
