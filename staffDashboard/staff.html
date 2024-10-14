@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="stylesheet" href="./staff.css"></link>
+    <link rel="stylesheet" href="./staff.css">
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Staff Dashboard - VISAR Examination Project</title>
     <link
@@ -16,6 +16,12 @@
     </header>
 
     <main class="container">
+      <div id="progress-indicator">
+        <div class="step active">1</div>
+        <div class="step">2</div>
+        <div class="step">3</div>
+      </div>
+
       <section id="exam-start-section" class="fade-in">
         <h2>Set Exam Start Date</h2>
         <form id="exam-start-form">
@@ -24,27 +30,12 @@
         </form>
       </section>
 
-      <section id="staff-input" class="fade-in">
+      <section id="subject-input-section" class="fade-in" style="display: none;">
         <h2>Subject Input Form</h2>
         <form id="staff-form">
-          <input
-            type="text"
-            id="staff-name"
-            placeholder="Staff Name"
-            required
-          />
-          <input
-            type="text"
-            id="subject-name"
-            placeholder="Subject Name"
-            required
-          />
-          <input
-            type="email"
-            id="staff-email"
-            placeholder="Staff Email"
-            required
-          />
+          <input type="text" id="staff-name" placeholder="Staff Name" required />
+          <input type="text" id="subject-name" placeholder="Subject Name" required />
+          <input type="email" id="staff-email" placeholder="Staff Email" required />
           <input
             type="number"
             id="subject-completion"
@@ -56,21 +47,16 @@
           />
           <button type="submit">Submit</button>
         </form>
+
+        <div id="subject-list"></div>
+        <div id="timetable"></div>
+
+        <button id="store-btn" style="display: none;">Store</button>
       </section>
 
-      <section id="timetable-management" class="fade-in">
-        <h2>Timetable Management</h2>
-        <button id="create-timetable">Create New Timetable</button>
-        <select id="timetable-selector"></select>
-      </section>
-
-      <section id="subject-list" class="fade-in"></section>
-
-      <section id="timetable" class="fade-in"></section>
-      <section id="database-storage" class="fade-in">
+      <section id="database-storage-section" class="fade-in" style="display: none;">
         <h2>Database Storage</h2>
-        <button id="store-db-btn">Store in Database</button>
-        <div id="table-name-input" style="display: none">
+        <div id="table-name-input">
           <input type="text" id="table-name" placeholder="Enter table name" />
           <button id="confirm-store-btn">Confirm</button>
         </div>
@@ -83,6 +69,7 @@
         <p id="modal-message"></p>
       </div>
     </div>
+
+    <script src="./staff.js"></script>
   </body>
-  <script src="./staff.js"></script>
 </html>
