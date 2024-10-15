@@ -30,24 +30,16 @@
     <section id="timetable">
         <h2>Examination Time Table</h2>
         <div class="card-container">
-            <div class="card" onclick="showModal('UG 1st year IT', 'Date: 15th May 2024<br>Time: 9:00 AM - 12:00 PM')">
-                <h3>UG 1st year IT</h3>
-                <p>15th May 2024</p>
-            </div>
-            <div class="card" onclick="showModal('UG 2nd year IT', 'Date: 17th May 2024<br>Time: 2:00 PM - 5:00 PM')">
-                <h3>UG 2nd year IT</h3>
-                <p>17th May 2024</p>
-            </div>
-            <div class="card" onclick="showModal('UG 3rd year I', 'Date: 20th May 2024<br>Time: 10:00 AM - 1:00 PM')">
-                <h3>UG 3rd year IT</h3>
-                <p>20th May 2024</p>
-            </div>
-            <div class="card" onclick="showModal('PG IT', 'Date: 22nd May 2024<br>Time: 1:00 PM - 4:00 PM')">
-                <h3>PG IT</h3>
-                <p>22nd May 2024</p>
-            </div>
+            
         </div>
     </section>
+    <div id="modal" class="modal">
+        <div class="modal-content">
+          <span class="close" onclick="closeModal()">&times;</span>
+          <h2 id="modalTitle"></h2>
+          <div id="modalContent"></div>
+        </div>
+    </div>
 
     <section id="about">
         <h2>About VISAR</h2>
