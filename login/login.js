@@ -25,23 +25,61 @@ document.addEventListener('DOMContentLoaded', function() {
         btn.addEventListener('click', toggleContainer);
     });
 
+    // Handle signup form submission
     signupForm.addEventListener('submit', function(e) {
         e.preventDefault();
         const name = document.getElementById('signupName').value;
         const email = document.getElementById('signupEmail').value;
         const password = document.getElementById('signupPassword').value;
 
-        console.log('Signup:', { name, email, password });
-        alert(`Signup successful for ${name}`);
+        fetch('http://localhost:3000/api/register', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ name, email, password }),
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                alert(data.error);
+            } else {
+                alert(data.message);
+                container.classList.remove("active"); // Switch to login form after successful signup
+            }
+        })
+        .catch((error) => {
+            console.error('Error:', error);
+            alert('An error occurred during signup');
+        });
     });
 
+    // Handle login form submission
     loginForm.addEventListener('submit', function(e) {
         e.preventDefault();
         const email = document.getElementById('loginEmail').value;
         const password = document.getElementById('loginPassword').value;
 
-        console.log('Login:', { email, password });
-        alert(`Login attempt for ${email}`);
+        fetch('http://localhost:3000/api/login', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ email, password }),
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                alert(data.error);
+            } else {
+                alert(data.message);
+                console.log('Logged in user:', data.user); // You can handle user session here
+            }
+        })
+        .catch((error) => {
+            console.error('Error:', error);
+            alert('An error occurred during login');
+        });
     });
 
     updateMobileToggleText();
