@@ -2,6 +2,7 @@ const express = require('express');
 const mysql = require('mysql2');
 const bodyParser = require('body-parser');
 const cors = require('cors');
+const path = require('path');
 
 const app = express();
 const port = 3000;
@@ -21,6 +22,9 @@ const db = mysql.createPool({
   queueLimit: 0
 });
 
+// Serve static files from the 'public' directory
+app.use(express.static(path.join(__dirname, 'public')));
+
 // API endpoint to store timetables
 app.post('/api/store-timetables', (req, res) => {
   const { tableName, data } = req.body;
@@ -29,9 +33,9 @@ app.post('/api/store-timetables', (req, res) => {
     return res.status(400).json({ error: 'Missing tableName or data' });
   }
 
-  let timetables;
+  let timetable;
   try {
-    timetables = JSON.parse(data);
+    timetable = typeof data === 'string' ? JSON.parse(data) : data;
   } catch (error) {
     console.error('Invalid JSON data:', error);
     return res.status(400).json({ error: 'Invalid JSON data', details: error.message });
@@ -56,19 +60,17 @@ app.post('/api/store-timetables', (req, res) => {
 
     const insertSQL = `
       INSERT INTO ${tableName} 
-      (exam_start_date, subject_name, staff_name, staff_email, subject_completion) 
+      (exam_start_date, subject_name, staff_name, staff_email, subject_completion)
       VALUES ?
     `;
 
-    const values = timetables.flatMap(timetable => 
-      timetable.subjects.map(subject => [
-        new Date(timetable.examStartDate),
-        subject.subjectName,
-        subject.staffName,
-        subject.staffEmail,
-        subject.subjectCompletion
-      ])
-    );
+    const values = timetable.subjects.map(subject => [
+      new Date(timetable.examStartDate),
+      subject.subjectName,
+      subject.staffName,
+      subject.staffEmail,
+      subject.subjectCompletion
+    ]);
 
     db.query(insertSQL, [values], (err, result) => {
       if (err) {
@@ -80,7 +82,7 @@ app.post('/api/store-timetables', (req, res) => {
   });
 });
 
-
+// API endpoint to list all tables
 app.get('/api/tables', (req, res) => {
   const query = `
     SELECT TABLE_NAME 
@@ -99,7 +101,7 @@ app.get('/api/tables', (req, res) => {
   });
 });
 
-// New endpoint to get table content
+// API endpoint to get table content
 app.get('/api/table/:tableName', (req, res) => {
   const tableName = req.params.tableName;
   const query = `SELECT * FROM ${tableName}`;
@@ -113,6 +115,12 @@ app.get('/api/table/:tableName', (req, res) => {
   });
 });
 
+// Serve the index.html as the default page
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+// Start server
 app.listen(port, () => {
   console.log(`Server running at http://localhost:${port}`);
 });

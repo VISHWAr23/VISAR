@@ -49,6 +49,7 @@ main {
 }
 
 #progress-indicator {
+  margin-top: 16%;
   display: flex;
   justify-content: center;
   margin-bottom: 20px;
