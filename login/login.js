@@ -72,8 +72,9 @@ document.addEventListener('DOMContentLoaded', function() {
             if (data.error) {
                 alert(data.error);
             } else {
-                alert(data.message);
-                console.log('Logged in user:', data.user); // You can handle user session here
+                console.log("visgsy");
+                window.location.href = "../staffDashboard/staff.html";  // Corrected line for redirection
+                console.log('Logged in user:', data.user);  // You can handle user session here
             }
         })
         .catch((error) => {
