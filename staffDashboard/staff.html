@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="stylesheet" href="./staff.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Staff Dashboard - VISAR Examination Project</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <header>
+      <h1>Staff Dashboard</h1>
+    </header>
+
+    <div id="toast" class="toast hidden">
+      <div class="toast-content"></div>
+  </div>
+
+    <main class="container">
+      <div id="progress-indicator">
+        <div class="step active">1</div>
+        <div class="step">2</div>
+        <div class="step">3</div>
+      </div>
+
+      <section id="exam-start-section" class="fade-in">
+        <h2>Set Exam Start Date</h2>
+        <form id="exam-start-form">
+          <input type="date" id="exam-start-date" required />
+          <button type="submit">Set Start Date</button>
+        </form><br>
+        <div class="card">
+          <h2 class="card-title">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="3 6 5 6 21 6"></polyline>
+                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+              </svg>
+              Delete Time Table
+          </h2>
+          <form id="deleteForm">
+              <div class="form-group">
+                  <label for="tableSelect">Select Time Table</label>
+                  <select id="tableSelect" class="form-control" required>
+                      <option value="">Select a timetable</option>
+                  </select>
+              </div>
+              <button type="submit" class="btn btn-danger">Delete Time Table</button>
+          </form>
+      </div>
+      </section>
+
+      <section id="subject-input-section" class="fade-in" style="display: none;">
+        <h2>Subject Input Form</h2>
+        <form id="staff-form">
+          <input type="text" id="staff-name" placeholder="Staff Name" required />
+          <input type="text" id="subject-name" placeholder="Subject Name" required />
+          <input type="email" id="staff-email" placeholder="Staff Email" required />
+          <input
+            type="number"
+            id="subject-completion"
+            placeholder="Subject Completion (%)"
+            min="0"
+            max="100"
+            step="0.1"
+            required
+          />
+          <button type="submit">Submit</button>
+        </form>
+
+        <div id="subject-list"></div>
+        <div id="timetable"></div>
+
+        <button id="store-btn" style="display: none;">Store</button>
+      </section>
+
+      <section id="database-storage-section" class="fade-in" style="display: none;">
+        <h2>Database Storage</h2>
+        <div id="table-name-input">
+          <input type="text" id="table-name" placeholder="Enter table name" />
+          <button id="confirm-store-btn">Confirm</button>
+        </div>
+      </section>
+    </main>
+
+    <div id="modal" class="modal">
+      <div class="modal-content">
+        <span class="close">&times;</span>
+        <p id="modal-message"></p>
+      </div>
+    </div>
+
+    <script src="./staff.js"></script>
+  </body>
+</html>
