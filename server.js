@@ -1,8 +1,9 @@
 const express = require('express');
-const mysql = require('mysql2/promise');
+const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
 const cors = require('cors');
 const bcrypt = require('bcrypt');
+const path = require('path');
 const app = express();
 const port = 3000;
 
@@ -10,19 +11,37 @@ const port = 3000;
 app.use(cors());
 app.use(bodyParser.json());
 
-// Database configuration
-const dbConfig = {
-  host: 'localhost',
-  user: 'root',
-  password: '&Vishwa05&',
-  database: 'visar_examination_project',
-  waitForConnections: true,
-  connectionLimit: 10,
-  queueLimit: 0
-};
+// Serve static files from the root directory (e.g., index.html)
+app.use(express.static(path.join(__dirname)));
 
-// Create the connection pool
-const pool = mysql.createPool(dbConfig);
+// MongoDB connection
+mongoose.connect('mongodb://localhost:27017/visar_examination_project', {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+});
+
+const db = mongoose.connection;
+db.on('error', console.error.bind(console, 'connection error:'));
+db.once('open', () => {
+  console.log('Connected to MongoDB');
+});
+
+// User Schema
+const userSchema = new mongoose.Schema({
+  name: String,
+  email: { type: String, unique: true },
+  password: String,
+});
+
+const User = mongoose.model('User', userSchema);
+
+// Timetable Schema
+const timetableSchema = new mongoose.Schema({
+  tableName: { type: String, unique: true },
+  data: Object,
+});
+
+const Timetable = mongoose.model('Timetable', timetableSchema);
 
 // API endpoint for user registration (signup)
 app.post('/api/register', async (req, res) => {
@@ -31,11 +50,11 @@ app.post('/api/register', async (req, res) => {
     return res.status(400).json({ error: 'Missing fields' });
   }
   try {
+    // Hash the password before saving it to the database
     const hashedPassword = await bcrypt.hash(password, 10);
-    await pool.execute(
-      'INSERT INTO users (name, email, password) VALUES (?, ?, ?)',
-      [name, email, hashedPassword]
-    );
+    // Insert user into the database
+    const user = new User({ name, email, password: hashedPassword });
+    await user.save();
     res.status(201).json({ message: 'User registered successfully' });
   } catch (err) {
     console.error('Error inserting user:', err);
@@ -50,163 +69,69 @@ app.post('/api/login', async (req, res) => {
     return res.status(400).json({ error: 'Missing email or password' });
   }
   try {
-    const [results] = await pool.execute('SELECT * FROM users WHERE email = ?', [email]);
-    if (results.length === 0) {
+    // Query to find the user by email
+    const user = await User.findOne({ email });
+    if (!user) {
       return res.status(401).json({ error: 'Invalid email or password' });
     }
-    const user = results[0];
+    // Compare the hashed password with the entered password
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       return res.status(401).json({ error: 'Invalid email or password' });
     }
-    res.json({ message: 'Login successful', user: { id: user.id, name: user.name, email: user.email } });
+    // If login is successful, send back user details
+    res.json({ message: 'Login successful', user: { id: user._id, name: user.name, email: user.email } });
   } catch (err) {
     console.error('Database error:', err);
     res.status(500).json({ error: 'Database error', details: err.message });
   }
 });
 
-// API endpoint to get all tables
+// API endpoint to get all timetables
 app.get('/api/tables', async (req, res) => {
   try {
-    const [results] = await pool.execute(`
-      SELECT TABLE_NAME 
-      FROM INFORMATION_SCHEMA.TABLES
-      WHERE TABLE_SCHEMA = ? 
-      AND TABLE_NAME != 'users'
-    `, [dbConfig.database]);
-
-    const tables = results.map(row => row.TABLE_NAME);
+    const timetables = await Timetable.find({});
+    const tables = timetables.map(timetable => timetable.tableName);
     res.json(tables);
   } catch (err) {
-    console.error('Error fetching tables:', err);
-    res.status(500).json({ error: 'Error fetching tables', details: err.message });
+    console.error('Error fetching timetables:', err);
+    res.status(500).json({ error: 'Error fetching timetables', details: err.message });
   }
 });
 
-// API endpoint to get table content
+// API endpoint to get timetable content
 app.get('/api/table/:tableName', async (req, res) => {
   const tableName = req.params.tableName;
   try {
-    // Ensure the tableName is a valid identifier to prevent SQL injection
-    const escapedTableName = mysql.escapeId(tableName);
-    const [results] = await pool.execute(`SELECT * FROM ${escapedTableName}`);
-    res.json(results);
+    const timetable = await Timetable.findOne({ tableName });
+    if (!timetable) {
+      return res.status(404).json({ error: 'Timetable not found' });
+    }
+    res.json(timetable.data);
   } catch (err) {
     console.error(`Error fetching data from ${tableName}:`, err);
     res.status(500).json({ error: `Error fetching data from ${tableName}`, details: err.message });
   }
 });
 
-// API endpoint to delete a timetable
-app.delete('/api/delete-timetable', async (req, res) => {
-  try {
-    const { tableName } = req.body;
-    
-    if (!tableName) {
-      return res.status(400).json({ success: false, message: 'Table name is required' });
-    }
-
-    const escapedTableName = mysql.escapeId(tableName);  // Escape the table name
-    await pool.execute(`DROP TABLE IF EXISTS ${escapedTableName}`);
-    
-    res.json({ success: true, message: 'Table deleted successfully' });
-  } catch (error) {
-    console.error('Delete table error:', error);
-    res.status(500).json({ success: false, message: 'Failed to delete table', error: error.message });
-  }
-});
-
-// API endpoint to dynamically store timetable data into a specified table
-// API endpoint to dynamically store timetable data into a specified table
+// API endpoint to store timetable
 app.post('/api/store-timetables', async (req, res) => {
   const { tableName, data } = req.body;
-
-  if (!tableName || !data) {
-    return res.status(400).json({ error: 'Missing tableName or data' });
-  }
-
-  let timetable;
   try {
-    timetable = JSON.parse(data);
-    // Ensure timetable is an object and contains the required properties
-    if (typeof timetable !== 'object' || !timetable.subjects || !Array.isArray(timetable.subjects)) {
-      throw new Error('Parsed data is not a valid timetable object');
-    }
-  } catch (error) {
-    console.error('Invalid JSON data:', error);
-    return res.status(400).json({ error: 'Invalid JSON data', details: error.message });
-  }
-
-  const createTableSQL = `
-    CREATE TABLE IF NOT EXISTS ${mysql.escapeId(tableName)} (
-      id INT AUTO_INCREMENT PRIMARY KEY,
-      exam_start_date DATE,
-      subject_name VARCHAR(255),
-      staff_name VARCHAR(255),
-      staff_email VARCHAR(255),
-      subject_completion FLOAT
-    )
-  `;
-
-  try {
-    await pool.query(createTableSQL); // Use pool.query instead of dbConfig.query
-
-    const insertSQL = `
-      INSERT INTO ${mysql.escapeId(tableName)} 
-      (exam_start_date, subject_name, staff_name, staff_email, subject_completion) 
-      VALUES ?
-    `;
-
-    const values = timetable.subjects.map(subject => [
-      new Date(timetable.examStartDate), // Ensure this date is valid
-      subject.subjectName,
-      subject.staffName,
-      subject.staffEmail,
-      subject.subjectCompletion
-    ]);
-
-    // Check if values is empty
-    if (values.length === 0) {
-      return res.status(400).json({ error: 'No valid data to insert' });
-    }
-
-    const [result] = await pool.query(insertSQL, [values]); // Use pool.query
-
-    res.json({ message: 'Data stored successfully', affectedRows: result.affectedRows });
+    // Ensure data is an object, not a string
+    const parsedData = typeof data === 'string' ? JSON.parse(data) : data;
+    const timetable = new Timetable({ tableName, data: parsedData });
+    await timetable.save();
+    res.status(201).json({ message: 'Timetable stored successfully' });
   } catch (err) {
-    console.error('Error storing data:', err);
-    res.status(500).json({ error: 'Error storing data', details: err.message });
+    console.error('Error storing timetable:', err);
+    res.status(500).json({ error: 'Error storing timetable', details: err.message });
   }
 });
 
-
-// Helper function to get stored exam data
-app.get('/api/exam-data', async (req, res) => {
-  try {
-    const [results] = await pool.execute(`
-      SELECT 
-        es.exam_start_date,
-        sub.staff_name,
-        sub.subject_name,
-        sub.staff_email,
-        sub.subject_completion
-      FROM exam_sessions es
-      JOIN exam_subjects sub ON es.id = sub.exam_session_id
-      ORDER BY sub.subject_completion DESC
-    `);
-
-    res.json({
-      success: true,
-      data: results
-    });
-  } catch (err) {
-    console.error('Error fetching exam data:', err);
-    res.status(500).json({ 
-      error: 'Database error', 
-      details: err.message 
-    });
-  }
+// Handle root URL
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'index.html'));
 });
 
 // Start the server
